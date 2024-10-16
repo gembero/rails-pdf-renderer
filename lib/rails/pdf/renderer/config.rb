@@ -3,7 +3,7 @@ class RailsPdfRenderer
     include ActiveSupport::Configurable
 
     config_accessor :auth_key
-    config_accessor(:url) { "https://europe-west1-lucalabs-development.cloudfunctions.net/htmlToPdf" }
+    config_accessor :url
     config_accessor(:basic_auth) { false }
     config_accessor(:default_protocol) { "https" }
 
