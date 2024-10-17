@@ -7,6 +7,27 @@ class RailsPdfRenderer
   module ActionViewHelper
     ASSET_URL_REGEX = /url\(['"]?([^'"]+?)['"]?\)/
 
+    class MissingAsset < StandardError; end
+
+    class MissingLocalAsset < MissingAsset
+      attr_reader :path
+
+      def initialize(path)
+        @path = path
+        super("Could not find asset '#{path}'")
+      end
+    end
+
+    class MissingRemoteAsset < MissingAsset
+      attr_reader :url, :response
+
+      def initialize(url, response)
+        @url = url
+        @response = response
+        super("Could not fetch asset '#{url}': server responded with #{response.code} #{response.message}")
+      end
+    end
+
     class PropshaftAsset < SimpleDelegator
       def content_type
         super.to_s
@@ -21,9 +42,39 @@ class RailsPdfRenderer
       end
     end
 
+    class SprocketsEnvironment
+      def self.instance
+        @instance ||= Sprockets::Railtie.build_environment(Rails.application)
+      end
+
+      def self.find_asset(*args)
+        instance.find_asset(*args)
+      end
+    end
+
+    class LocalAsset
+      attr_reader :path
+
+      def initialize(path)
+        @path = path
+      end
+
+      def content_type
+        Mime::Type.lookup_by_extension(File.extname(path).delete('.'))
+      end
+
+      def to_s
+        IO.read(path)
+      end
+
+      def filename
+        path.to_s
+      end
+    end
+
     def pdf_asset_base64(path)
       asset = find_asset(path)
-      raise "Could not find asset '#{path}'" if asset.nil?
+      raise MissingLocalAsset, path if asset.nil?
 
       base64 = Base64.encode64(asset.to_s).gsub(/\s+/, '')
       "data:#{asset.content_type};base64,#{Rack::Utils.escape(base64)}"
@@ -149,18 +200,38 @@ class RailsPdfRenderer
       if Rails.application.assets.respond_to?(:find_asset)
         Rails.application.assets.find_asset(path, :base_path => Rails.application.root.to_s)
       elsif defined?(Propshaft::Assembly) && Rails.application.assets.is_a?(Propshaft::Assembly)
-        asset = Rails.application.assets.load_path.find(path)
-        raise "Could not find asset: #{path}" if asset.nil?
-        PropshaftAsset.new(asset)
+        PropshaftAsset.new(Rails.application.assets.load_path.find(path))
+      elsif Rails.application.respond_to?(:assets_manifest)
+        relative_asset_path = get_asset_path_from_manifest(path)
+        return unless relative_asset_path
+
+        asset_path = File.join(Rails.application.assets_manifest.dir, relative_asset_path)
+        LocalAsset.new(asset_path) if File.file?(asset_path)
       else
-        Sprockets::Railtie.build_environment(Rails.application).find_asset(path, :base_path => Rails.application.root.to_s)
+        SprocketsEnvironment.find_asset(path, :base_path => Rails.application.root.to_s)
+      end
+    end
+
+    def get_asset_path_from_manifest(path)
+      assets = Rails.application.assets_manifest.assets
+
+      if File.extname(path).empty?
+        assets.find do |asset, _v|
+          directory = File.dirname(asset)
+          asset_path = File.basename(asset, File.extname(asset))
+          asset_path = File.join(directory, asset_path) if directory != '.'
+
+          asset_path == path
+        end&.last
+      else
+        assets[path]
       end
     end
 
     # will prepend a http or default_protocol to a protocol relative URL
     # or when no protcol is set.
     def prepend_protocol(source)
-      protocol = RailsPdfRenderer.configuration.default_protocol
+      protocol = WickedPdf.config[:default_protocol] || 'http'
       if source[0, 2] == '//'
         source = [protocol, ':', source].join
       elsif source[0] != '/' && !source[0, 8].include?('://')
@@ -177,22 +248,46 @@ class RailsPdfRenderer
     end
 
     def read_asset(source)
-      if precompiled_or_absolute_asset?(source)
-        pathname = asset_pathname(source)
-        if pathname =~ URI_REGEXP
-          read_from_uri(pathname)
-        elsif File.file?(pathname)
-          IO.read(pathname)
-        end
-      else
-        find_asset(source).to_s
+      asset = find_asset(source)
+      return asset.to_s.force_encoding('UTF-8') if asset
+
+      unless precompiled_or_absolute_asset?(source)
+        raise MissingLocalAsset, source if WickedPdf.config[:raise_on_missing_assets]
+
+        return
+      end
+
+      pathname = asset_pathname(source)
+      if pathname =~ URI_REGEXP
+        read_from_uri(pathname)
+      elsif File.file?(pathname)
+        IO.read(pathname)
+      elsif WickedPdf.config[:raise_on_missing_assets]
+        raise MissingLocalAsset, pathname if WickedPdf.config[:raise_on_missing_assets]
       end
     end
 
     def read_from_uri(uri)
-      asset = Net::HTTP.get(URI(uri))
+      response = Net::HTTP.get_response(URI(uri))
+
+      unless response.is_a?(Net::HTTPSuccess)
+        raise MissingRemoteAsset.new(uri, response) if WickedPdf.config[:raise_on_missing_assets]
+
+        return
+      end
+
+      asset = response.body
       asset.force_encoding('UTF-8') if asset
+      asset = gzip(asset) if WickedPdf.config[:expect_gzipped_remote_assets]
       asset
+    end
+
+    def gzip(asset)
+      stringified_asset = StringIO.new(asset)
+      gzipper = Zlib::GzipReader.new(stringified_asset)
+      gzipper.read
+    rescue Zlib::GzipFile::Error
+      nil
     end
 
     def webpacker_source_url(source)
@@ -224,7 +319,13 @@ class RailsPdfRenderer
     end
 
     def webpacker_version
-      Webpacker::VERSION
+      if defined?(Shakapacker)
+        require 'shakapacker/version'
+        Shakapacker::VERSION
+      elsif defined?(Webpacker)
+        require 'webpacker/version'
+        Webpacker::VERSION
+      end
     end
   end
 end
