@@ -231,7 +231,7 @@ class RailsPdfRenderer
     # will prepend a http or default_protocol to a protocol relative URL
     # or when no protcol is set.
     def prepend_protocol(source)
-      protocol = WickedPdf.config[:default_protocol] || 'http'
+      protocol = RailsPdfRenderer.configuration.default_protocol || 'http'
       if source[0, 2] == '//'
         source = [protocol, ':', source].join
       elsif source[0] != '/' && !source[0, 8].include?('://')
@@ -252,7 +252,7 @@ class RailsPdfRenderer
       return asset.to_s.force_encoding('UTF-8') if asset
 
       unless precompiled_or_absolute_asset?(source)
-        raise MissingLocalAsset, source if WickedPdf.config[:raise_on_missing_assets]
+        raise MissingLocalAsset, source if RailsPdfRenderer.configuration.raise_on_missing_assets
 
         return
       end
@@ -262,8 +262,8 @@ class RailsPdfRenderer
         read_from_uri(pathname)
       elsif File.file?(pathname)
         IO.read(pathname)
-      elsif WickedPdf.config[:raise_on_missing_assets]
-        raise MissingLocalAsset, pathname if WickedPdf.config[:raise_on_missing_assets]
+      elsif RailsPdfRenderer.configuration[:raise_on_missing_assets]
+        raise MissingLocalAsset, pathname if RailsPdfRenderer.configuration.raise_on_missing_assets
       end
     end
 
@@ -271,14 +271,14 @@ class RailsPdfRenderer
       response = Net::HTTP.get_response(URI(uri))
 
       unless response.is_a?(Net::HTTPSuccess)
-        raise MissingRemoteAsset.new(uri, response) if WickedPdf.config[:raise_on_missing_assets]
+        raise MissingRemoteAsset.new(uri, response) if RailsPdfRenderer.configuration.raise_on_missing_assets
 
         return
       end
 
       asset = response.body
       asset.force_encoding('UTF-8') if asset
-      asset = gzip(asset) if WickedPdf.config[:expect_gzipped_remote_assets]
+      asset = gzip(asset) if RailsPdfRenderer.configuration.expect_gzipped_remote_assets
       asset
     end
 
