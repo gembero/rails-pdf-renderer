@@ -1,16 +1,12 @@
 class RailsPdfRenderer
   class Config
-    include ActiveSupport::Configurable
-
-    config_accessor :auth_key
-    config_accessor :url
-    config_accessor(:basic_auth) { false }
-    config_accessor(:default_protocol) { "https" }
-    config_accessor(:raise_on_missing_assets) { true }
-    config_accessor(:expect_gzipped_remote_assets) { false }
-
-
-    config_accessor(:default_options) do  {
+    class_attribute :auth_key, instance_accessor: true
+    class_attribute :url, instance_accessor: true
+    class_attribute :basic_auth, instance_accessor: true, default: false
+    class_attribute :default_protocol, instance_accessor: true, default: "https"
+    class_attribute :raise_on_missing_assets, instance_accessor: true, default: true
+    class_attribute :expect_gzipped_remote_assets, instance_accessor: true, default: false
+    class_attribute :default_options, instance_accessor: true, default: {
       margin: {
         top: "0mm",
         bottom: "0mm",
@@ -18,6 +14,5 @@ class RailsPdfRenderer
         right: "0mm"
       }
     }
-    end
   end
 end
