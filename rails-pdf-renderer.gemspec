@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Helper library to generate PDFs from Rails."
   spec.homepage = "https://github.com/erikaxel/"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.4.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/erikaxel/"
@@ -30,9 +30,11 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency 'rails'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'rspec'
+  spec.add_dependency "activesupport", ">= 7.0"
+
+  spec.add_development_dependency "rails"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "rspec"
   spec.add_development_dependency "rspec-rails"
-  spec.add_development_dependency 'standard'
+  spec.add_development_dependency "standard"
 end

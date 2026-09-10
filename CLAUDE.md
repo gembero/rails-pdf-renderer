@@ -13,20 +13,27 @@ from which much of the asset-handling code was adapted.
 Usage in an app looks like `render pdf: "filename", template: "..."` — the gem
 intercepts `render`/`render_to_string` when the options hash contains a `:pdf` key.
 
+## Ruby toolchain
+
+The local Ruby version is managed by [mise](https://mise.jdx.dev) and pinned in `.tool-versions`
+(Ruby 4.0). The gem itself supports Ruby 3.3+; CI covers 3.3, 3.4 and 4.0.
+
+**Always run Ruby commands through `mise exec --`** so they use the pinned Ruby instead of
+the system Ruby. If `mise install` hasn't been run in a fresh checkout, run it first.
+
 ## Commands
 
 ```bash
-bin/setup                # bundle install
-bundle exec rake         # default task: rspec + standardrb (what CI runs)
-bundle exec rake spec    # tests only
-bundle exec standardrb   # lint only; add --fix to autocorrect
-bin/console              # IRB with the gem loaded
+mise exec -- bin/setup                    # bundle install
+mise exec -- bundle exec rake             # default task: rspec + standardrb (what CI runs)
+mise exec -- bundle exec rake spec        # tests only
+mise exec -- bundle exec rspec            # tests only
+mise exec -- standardrb                   # lint only; add --fix to autocorrect
+mise exec -- bin/console                  # IRB with the gem loaded
 ```
 
-CI (`.github/workflows/main.yml`) runs `bundle exec rake` on Ruby 3.2.2 only,
-even though the gemspec declares `required_ruby_version >= 2.4.0`. Avoid syntax
-newer than Ruby 2.4 in `lib/` (no `&.`-era-only concerns, but no pattern matching,
-no endless methods, no hash shorthand) — CI will not catch violations.
+CI (`.github/workflows/main.yml`) runs `bundle exec rake` against Ruby 3.3, 3.4 and 4.0,
+matching the gemspec's `required_ruby_version >= 3.3.0`.
 
 ## Code layout
 
@@ -81,4 +88,4 @@ keep unrelated formatting churn out of diffs.
 
 1. Bump `VERSION` in `lib/rails/pdf/renderer/version.rb`.
 2. Add an entry to `CHANGELOG.md`.
-3. `bundle exec rake release` (tags, pushes, publishes to rubygems.org).
+3. `mise exec -- bundle exec rake release` (tags, pushes, publishes to rubygems.org).
