@@ -17,7 +17,74 @@ Install the gem and add to the application's Gemfile by executing:
 
 ## Usage
 
+Render the current controller action as a PDF:
 
+```ruby
+class InvoicesController < ApplicationController
+  def show
+    render pdf: "invoice-#{@invoice.number}"
+  end
+end
+```
+
+Or get the PDF back as a string:
+
+```ruby
+pdf = ApplicationController.renderer.render_to_string(pdf: true, template: "invoices/show")
+```
+
+### `inline:` vs `html:`
+
+These two options look similar and are **not** interchangeable:
+
+| Option    | Content                           | Processed by                               |
+| --------- | --------------------------------- | ------------------------------------------ |
+| `inline:` | An **ERB template** source string | ActionView - `<%= %>` is evaluated as Ruby |
+| `html:`   | **Finished HTML**                 | Nothing - sent to the PDF service verbatim |
+
+Use `html:` whenever the HTML has already been rendered - ViewComponent output, a
+`render_to_string` from elsewhere, a stored email body, or any content influenced by user
+input:
+
+```ruby
+html = InvoiceComponent.new(invoice: @invoice).render_in(view_context)
+ApplicationController.renderer.render_to_string(pdf: true, html: html)
+```
+
+> **Security:** passing already-rendered HTML to `inline:` makes ActionView compile it as an
+> ERB template, so any `<%= ... %>` in the content executes as Ruby on your server. Always use
+> `html:` for content you did not author as a template.
+
+`html:` is sent as-is, so `layout:`, `locals:`, `assigns:`, `formats:` and `handlers:` are
+ignored, and passing both `html:` and `inline:` raises `ArgumentError`.
+
+If you need a non-ERB *template* language for `inline:`, pass `type:` - it is forwarded to
+ActionView's handler lookup, e.g. `type: :raw` or `type: :haml`.
+
+### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `pdf:` | Filename without the `.pdf` extension, when using `render` |
+| `html:` | Finished HTML, sent to the PDF service verbatim |
+| `inline:` | ERB template source |
+| `template:`, `layout:`, `locals:`, `assigns:`, `formats:`, `handlers:`, `file:`, `type:` | Standard ActionView rendering options |
+| `show_as_html:` | Render the HTML in the browser instead of a PDF, for debugging |
+| `status:` | HTTP status for the response |
+| `disposition:` | `"inline"` (default) or `"attachment"` |
+| `save_to_file:` | Also write the PDF to this path |
+| `save_only:` | Write the PDF to `save_to_file:` without sending a response |
+| `orientation:`, `pageSize:`, `zoom:`, `height:`, `width:`, `margin:`, `footerTemplate:` | Forwarded to the PDF service |
+
+### Configuration
+
+```ruby
+RailsPdfRenderer.configure do |config|
+  config.url = "https://your-pdf-service.example.com/render"
+  config.auth_key = Rails.application.credentials.pdf_service_key
+  config.default_options = {margin: {top: "10mm", bottom: "10mm", left: "0mm", right: "0mm"}}
+end
+```
 
 ## Development
 

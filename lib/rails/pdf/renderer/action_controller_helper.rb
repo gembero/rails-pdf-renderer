@@ -1,3 +1,9 @@
+require "base64"
+require "json"
+require "net/http"
+require "active_support/core_ext/object/blank"
+require "active_support/core_ext/string/output_safety"
+
 class RailsPdfRenderer
   module ActionControllerHelper
     def self.prepended(base)
@@ -29,6 +35,48 @@ class RailsPdfRenderer
     def make_pdf(options = {})
       options.delete :pdf # We dont use the filename when rendering to string
 
+      return pdf_from_server(raw_html(options), options) if options.key?(:html)
+
+      pdf_from_server(render_to_string(view_render_options(options)), options)
+    end
+
+    def make_and_send_pdf(pdf_name, options = {})
+      options[:layout] ||= false
+      options[:template] ||= File.join(controller_path, action_name)
+      options[:disposition] ||= "inline"
+      if options[:show_as_html]
+        render_opts = if options.key?(:html)
+          {html: raw_html(options).html_safe, layout: false, content_type: "text/html"}
+        else
+          view_render_options(options).merge(content_type: "text/html")
+        end
+        render_opts[:status] = options[:status] if options[:status]
+        render(render_opts)
+      else
+        pdf_content = make_pdf(options)
+        File.open(options[:save_to_file], "wb") { |file| file << pdf_content } if options[:save_to_file]
+        unless options[:save_only]
+          send_opts = {filename: pdf_name + ".pdf", type: "application/pdf", disposition: options[:disposition]}
+          send_opts[:status] = options[:status] if options[:status]
+          send_data(pdf_content, send_opts)
+        end
+      end
+    end
+
+    # Already-rendered HTML supplied by the caller through the :html option. Unlike
+    # :inline it is never compiled as a template, so `<%= %>` in the content cannot
+    # execute as Ruby on the server.
+    def raw_html(options)
+      if options.key?(:inline)
+        raise ArgumentError, "rails-pdf-renderer: :html and :inline are mutually exclusive. " \
+          ":html is finished HTML, :inline is an ERB template."
+      end
+      options[:html].to_s
+    end
+
+    # Options for rendering through ActionView. Everything here goes through a template
+    # handler - :inline defaults to ERB unless :type says otherwise.
+    def view_render_options(options)
       render_opts = {
         template: options[:template],
         layout: options[:layout],
@@ -39,32 +87,8 @@ class RailsPdfRenderer
       render_opts[:inline] = options[:inline] if options[:inline]
       render_opts[:locals] = options[:locals] if options[:locals]
       render_opts[:file] = options[:file] if options[:file]
-      html_string = render_to_string(render_opts)
-      pdf_from_server(html_string, options)
-    end
-
-    def make_and_send_pdf(pdf_name, options = {})
-      options[:layout] ||= false
-      options[:template] ||= File.join(controller_path, action_name)
-      options[:disposition] ||= "inline"
-      if options[:show_as_html]
-        render_opts = {
-          template: options[:template],
-          layout: options[:layout],
-          formats: options[:formats],
-          handlers: options[:handlers],
-          assigns: options[:assigns],
-          content_type: "text/html"
-        }
-        render_opts[:inline] = options[:inline] if options[:inline]
-        render_opts[:locals] = options[:locals] if options[:locals]
-        render_opts[:file] = options[:file] if options[:file]
-        render(render_opts)
-      else
-        pdf_content = make_pdf(options)
-        File.open(options[:save_to_file], "wb") { |file| file << pdf_content } if options[:save_to_file]
-        send_data(pdf_content, filename: pdf_name + ".pdf", type: "application/pdf", disposition: options[:disposition]) unless options[:save_only]
-      end
+      render_opts[:type] = options[:type] if options[:type]
+      render_opts
     end
 
     def pdf_from_server(html, options)
