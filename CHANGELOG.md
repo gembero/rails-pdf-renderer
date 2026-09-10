@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [0.5.0]
 ### New Features
 - Added the `html:` option for already-rendered HTML. The string is sent to the PDF
   service verbatim and is never compiled as a template, so `<%= %>` in the content
