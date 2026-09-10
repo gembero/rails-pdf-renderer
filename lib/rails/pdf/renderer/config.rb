@@ -1,3 +1,5 @@
+require "active_support/core_ext/class/attribute"
+
 class RailsPdfRenderer
   class Config
     class_attribute :auth_key, instance_accessor: true
