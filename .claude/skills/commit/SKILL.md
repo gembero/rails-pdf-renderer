@@ -70,7 +70,7 @@ Added new feature for users
 
 ## Workflow
 
-1. Run `mise exec -- bundle exec rake` (rspec + standardrb) — this is exactly what CI runs on every push and PR. Fix anything it reports before committing. Always prefix Ruby commands with `mise exec --` so they use the Ruby pinned in `mise.toml` instead of the system Ruby.
+1. Run `mise exec -- bundle exec rake` (rspec + standardrb) — this is exactly what CI runs on every push and PR. Fix anything it reports before committing. Always prefix Ruby commands with `mise exec --` so they use the Ruby pinned in `.tool-versions` instead of the system Ruby.
 2. Stage the relevant changes with `git add`
 3. Create a commit with a message following the rules above
 4. Verify the commit was created successfully with `git log -1`

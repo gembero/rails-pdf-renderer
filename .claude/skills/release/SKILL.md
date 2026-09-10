@@ -70,7 +70,7 @@ Also confirm you're releasing from `main` and that it's up to date with `origin/
 
 ## Notes
 
-- The local Ruby version is pinned in `mise.toml`. Run every Ruby command through
+- The local Ruby version is pinned in `.tool-versions`. Run every Ruby command through
   `mise exec --` so it doesn't fall back to the system Ruby.
 - `Gemfile.lock` is gitignored, so there's no lockfile to update.
 - `mise exec -- bundle exec rake build` produces the gem locally under `pkg/` without

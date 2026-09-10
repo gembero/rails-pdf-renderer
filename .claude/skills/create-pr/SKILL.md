@@ -41,7 +41,7 @@ not a mechanical list of file changes. 2-5 sentences.
 - [ ] Any extra checks specific to this change
 ```
 
-`mise exec -- bundle exec rake` is the project's gate — CI runs it on Ruby 3.3, 3.4 and 4.0. Run Ruby commands through `mise exec --` so they use the Ruby pinned in `mise.toml` rather than the system Ruby. If you ran it against more than one Ruby version, or deleted `Gemfile.lock` to simulate a clean checkout, say so.
+`mise exec -- bundle exec rake` is the project's gate — CI runs it on Ruby 3.3, 3.4 and 4.0. Run Ruby commands through `mise exec --` so they use the Ruby pinned in `.tool-versions` rather than the system Ruby. If you ran it against more than one Ruby version, or deleted `Gemfile.lock` to simulate a clean checkout, say so.
 
 Only claim a check you actually ran.
 

@@ -22,7 +22,7 @@ Install the gem and add to the application's Gemfile by executing:
 ## Development
 
 The local Ruby version is managed with [mise](https://mise.jdx.dev) and pinned in
-`mise.toml`. Install it once with `mise install`, and run every command through mise so it
+`.tool-versions`. Install it once with `mise install`, and run every command through mise so it
 uses the pinned Ruby rather than the system one:
 
     $ mise install

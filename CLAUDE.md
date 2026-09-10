@@ -2,7 +2,7 @@
 
 ## Ruby toolchain
 
-The local Ruby version is managed by [mise](https://mise.jdx.dev) and pinned in `mise.toml`
+The local Ruby version is managed by [mise](https://mise.jdx.dev) and pinned in `.tool-versions`
 (Ruby 4.0). The gem itself supports Ruby 3.3+; CI covers 3.3, 3.4 and 4.0.
 
 **Always run Ruby commands through `mise exec --`** so they use the pinned Ruby instead of
