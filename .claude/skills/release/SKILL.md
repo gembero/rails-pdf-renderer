@@ -47,8 +47,8 @@ Also confirm you're releasing from `main` and that it's up to date with `origin/
    Newest version goes at the top, directly under the header block. Use `### New Features`
    and `### Fixes` sections with dash bullets; include only the sections that apply.
 
-3. **Run the gate**: `bundle exec rake` (rspec + standardrb). It must be green before you
-   release. CI runs this on Ruby 3.2, 3.3 and 3.4.
+3. **Run the gate**: `mise exec -- bundle exec rake` (rspec + standardrb). It must be green
+   before you release. CI runs this on Ruby 3.3, 3.4 and 4.0.
 
 4. **Commit** the version bump and changelog together, with the version as the subject
    prefix (see the `commit` skill for the general rules — no AI attribution, present tense):
@@ -60,7 +60,7 @@ Also confirm you're releasing from `main` and that it's up to date with `origin/
    A bare version subject (`0.4.0`) is acceptable when the release has no single headline
    change, but a short description is better.
 
-5. **Publish**: `bundle exec rake release`. This comes from `bundler/gem_tasks` and will:
+5. **Publish**: `mise exec -- bundle exec rake release`. This comes from `bundler/gem_tasks` and will:
    - create the `v0.5.0` git tag
    - push the commit and tag to `origin`
    - build the gem and push it to rubygems.org
@@ -70,6 +70,8 @@ Also confirm you're releasing from `main` and that it's up to date with `origin/
 
 ## Notes
 
+- The local Ruby version is pinned in `.tool-versions`. Run every Ruby command through
+  `mise exec --` so it doesn't fall back to the system Ruby.
 - `Gemfile.lock` is gitignored, so there's no lockfile to update.
-- `bundle exec rake build` produces the gem locally under `pkg/` without publishing —
-  useful for a dry run.
+- `mise exec -- bundle exec rake build` produces the gem locally under `pkg/` without
+  publishing — useful for a dry run.

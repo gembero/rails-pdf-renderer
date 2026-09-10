@@ -37,11 +37,11 @@ not a mechanical list of file changes. 2-5 sentences.
 
 ## Verification
 
-- [ ] `bundle exec rake` passes (rspec + standardrb)
+- [ ] `mise exec -- bundle exec rake` passes (rspec + standardrb)
 - [ ] Any extra checks specific to this change
 ```
 
-`bundle exec rake` is the project's gate — CI runs it on Ruby 3.2, 3.3 and 3.4. If you ran it against more than one Ruby version, or deleted `Gemfile.lock` to simulate a clean checkout, say so.
+`mise exec -- bundle exec rake` is the project's gate — CI runs it on Ruby 3.3, 3.4 and 4.0. Run Ruby commands through `mise exec --` so they use the Ruby pinned in `.tool-versions` rather than the system Ruby. If you ran it against more than one Ruby version, or deleted `Gemfile.lock` to simulate a clean checkout, say so.
 
 Only claim a check you actually ran.
 
@@ -106,7 +106,7 @@ and aborting the task, so this applies `standard:fix` across the lib and gemspec
 
 ## Verification
 
-- [ ] `bundle exec rake` passes on Ruby 3.2.9, 3.3.12 and 3.4.8 — 19 examples, 0 failures
+- [ ] `mise exec -- bundle exec rake` passes on Ruby 4.0.6 — 19 examples, 0 failures
 - [ ] Passes from scratch with `Gemfile.lock` deleted, simulating a clean CI checkout
 ```
 
@@ -126,7 +126,7 @@ contained non-ASCII characters. Assets resolved through Propshaft are now forced
 
 ## Verification
 
-- [ ] `bundle exec rake` passes
+- [ ] `mise exec -- bundle exec rake` passes
 - [ ] Rendering a PDF with a non-ASCII stylesheet succeeds in a Propshaft app
 ```
 
