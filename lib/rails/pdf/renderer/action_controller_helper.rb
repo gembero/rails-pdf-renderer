@@ -3,7 +3,7 @@ class RailsPdfRenderer
     def self.prepended(base)
       # Protect from trying to augment modules that appear
       # as the result of adding other gems.
-      return if base != ActionController::Base
+      nil if base != ActionController::Base
     end
 
     def render(*args)
@@ -30,11 +30,11 @@ class RailsPdfRenderer
       options.delete :pdf # We dont use the filename when rendering to string
 
       render_opts = {
-        :template => options[:template],
-        :layout => options[:layout],
-        :formats => options[:formats],
-        :handlers => options[:handlers],
-        :assigns => options[:assigns]
+        template: options[:template],
+        layout: options[:layout],
+        formats: options[:formats],
+        handlers: options[:handlers],
+        assigns: options[:assigns]
       }
       render_opts[:inline] = options[:inline] if options[:inline]
       render_opts[:locals] = options[:locals] if options[:locals]
@@ -46,15 +46,15 @@ class RailsPdfRenderer
     def make_and_send_pdf(pdf_name, options = {})
       options[:layout] ||= false
       options[:template] ||= File.join(controller_path, action_name)
-      options[:disposition] ||= 'inline'
+      options[:disposition] ||= "inline"
       if options[:show_as_html]
         render_opts = {
-          :template => options[:template],
-          :layout => options[:layout],
-          :formats => options[:formats],
-          :handlers => options[:handlers],
-          :assigns => options[:assigns],
-          :content_type => 'text/html'
+          template: options[:template],
+          layout: options[:layout],
+          formats: options[:formats],
+          handlers: options[:handlers],
+          assigns: options[:assigns],
+          content_type: "text/html"
         }
         render_opts[:inline] = options[:inline] if options[:inline]
         render_opts[:locals] = options[:locals] if options[:locals]
@@ -62,8 +62,8 @@ class RailsPdfRenderer
         render(render_opts)
       else
         pdf_content = make_pdf(options)
-        File.open(options[:save_to_file], 'wb') { |file| file << pdf_content } if options[:save_to_file]
-        send_data(pdf_content, :filename => pdf_name + '.pdf', :type => 'application/pdf', :disposition => options[:disposition]) unless options[:save_only]
+        File.open(options[:save_to_file], "wb") { |file| file << pdf_content } if options[:save_to_file]
+        send_data(pdf_content, filename: pdf_name + ".pdf", type: "application/pdf", disposition: options[:disposition]) unless options[:save_only]
       end
     end
 
@@ -77,10 +77,10 @@ class RailsPdfRenderer
       raise "auth_key is not set, you need to set it for rails-pdf-renderer to work" if auth_key.blank?
 
       uri = URI(url)
-      headers = { 'Content-Type': 'application/json', "Authorization": "Bearer #{auth_key64}" }
+      headers = {"Content-Type": "application/json", Authorization: "Bearer #{auth_key64}"}
       response = Net::HTTP.post(uri, payload.to_json, headers)
 
-      if response.kind_of? Net::HTTPSuccess
+      if response.is_a? Net::HTTPSuccess
         response.body
       else
         raise RailsPdfRenderer::Error.new(response)

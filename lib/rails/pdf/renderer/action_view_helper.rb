@@ -1,7 +1,7 @@
-require 'net/http'
-require 'delegate'
-require 'stringio'
-require_relative 'path_helper'
+require "net/http"
+require "delegate"
+require "stringio"
+require_relative "path_helper"
 
 class RailsPdfRenderer
   module ActionViewHelper
@@ -60,7 +60,7 @@ class RailsPdfRenderer
       end
 
       def content_type
-        Mime::Type.lookup_by_extension(File.extname(path).delete('.'))
+        Mime::Type.lookup_by_extension(File.extname(path).delete("."))
       end
 
       def to_s
@@ -76,7 +76,7 @@ class RailsPdfRenderer
       asset = find_asset(path)
       raise MissingLocalAsset, path if asset.nil?
 
-      base64 = Base64.encode64(asset.to_s).gsub(/\s+/, '')
+      base64 = Base64.encode64(asset.to_s).gsub(/\s+/, "")
       "data:#{asset.content_type};base64,#{Rack::Utils.escape(base64)}"
     end
 
@@ -86,7 +86,7 @@ class RailsPdfRenderer
       response = Net::HTTP.get_response(URI(url))
 
       if response.is_a?(Net::HTTPSuccess)
-        base64 = Base64.encode64(response.body).gsub(/\s+/, '')
+        base64 = Base64.encode64(response.body).gsub(/\s+/, "")
         "data:#{response.content_type};base64,#{Rack::Utils.escape(base64)}"
       else
         Rails.logger.warn("[pdf] #{response.code} #{response.message}: #{url}")
@@ -96,12 +96,12 @@ class RailsPdfRenderer
 
     def pdf_stylesheet_link_tag(*sources)
       stylesheet_contents = sources.collect do |source|
-        source = PathHelper.add_extension(source, 'css')
+        source = PathHelper.add_extension(source, "css")
         "<style type='text/css'>#{read_asset(source)}</style>"
       end.join("\n")
 
       stylesheet_contents.gsub(ASSET_URL_REGEX) do
-        if Regexp.last_match[1].starts_with?('data:')
+        if Regexp.last_match[1].starts_with?("data:")
           "url(#{Regexp.last_match[1]})"
         else
           "url(#{pdf_asset_path(Regexp.last_match[1])})"
@@ -116,7 +116,7 @@ class RailsPdfRenderer
         stylesheet_pack_tag(*sources)
       else
         css_text = sources.collect do |source|
-          source = PathHelper.add_extension(source, 'css')
+          source = PathHelper.add_extension(source, "css")
           pdf_stylesheet_link_tag(webpacker_source_url(source))
         end.join("\n")
         css_text.respond_to?(:html_safe) ? css_text.html_safe : css_text
@@ -130,7 +130,7 @@ class RailsPdfRenderer
         javascript_pack_tag(*sources)
       else
         sources.collect do |source|
-          source = PathHelper.add_extension(source, 'js')
+          source = PathHelper.add_extension(source, "js")
           "<script type='text/javascript'>#{read_asset(webpacker_source_url(source))}</script>"
         end.join("\n").html_safe
       end
@@ -141,19 +141,19 @@ class RailsPdfRenderer
     end
 
     def pdf_javascript_src_tag(jsfile, options = {})
-      jsfile = PathHelper.add_extension(jsfile, 'js')
+      jsfile = PathHelper.add_extension(jsfile, "js")
       javascript_include_tag pdf_asset_path(jsfile), options
     end
 
     def pdf_javascript_include_tag(*sources)
       sources.collect do |source|
-        source = PathHelper.add_extension(source, 'js')
+        source = PathHelper.add_extension(source, "js")
         "<script type='text/javascript'>#{read_asset(source)}</script>"
       end.join("\n").html_safe
     end
 
     def pdf_asset_path(asset)
-      if (pathname = asset_pathname(asset).to_s) =~ URI_REGEXP
+      if URI_REGEXP.match?(pathname = asset_pathname(asset).to_s)
         pathname
       else
         "file:///#{pathname}"
@@ -179,11 +179,11 @@ class RailsPdfRenderer
       if precompiled_or_absolute_asset?(source)
         asset = asset_path(source)
         pathname = prepend_protocol(asset)
-        if pathname =~ URI_REGEXP
+        if URI_REGEXP.match?(pathname)
           # asset_path returns an absolute URL using asset_host if asset_host is set
           pathname
         else
-          File.join(Rails.public_path, asset.sub(/\A#{Rails.application.config.action_controller.relative_url_root}/, ''))
+          File.join(Rails.public_path, asset.sub(/\A#{Rails.application.config.action_controller.relative_url_root}/, ""))
         end
       else
         asset = find_asset(source)
@@ -198,7 +198,7 @@ class RailsPdfRenderer
 
     def find_asset(path)
       if Rails.application.assets.respond_to?(:find_asset)
-        Rails.application.assets.find_asset(path, :base_path => Rails.application.root.to_s)
+        Rails.application.assets.find_asset(path, base_path: Rails.application.root.to_s)
       elsif defined?(Propshaft::Assembly) && Rails.application.assets.is_a?(Propshaft::Assembly)
         PropshaftAsset.new(Rails.application.assets.load_path.find(path))
       elsif Rails.application.respond_to?(:assets_manifest)
@@ -208,7 +208,7 @@ class RailsPdfRenderer
         asset_path = File.join(Rails.application.assets_manifest.dir, relative_asset_path)
         LocalAsset.new(asset_path) if File.file?(asset_path)
       else
-        SprocketsEnvironment.find_asset(path, :base_path => Rails.application.root.to_s)
+        SprocketsEnvironment.find_asset(path, base_path: Rails.application.root.to_s)
       end
     end
 
@@ -219,7 +219,7 @@ class RailsPdfRenderer
         assets.find do |asset, _v|
           directory = File.dirname(asset)
           asset_path = File.basename(asset, File.extname(asset))
-          asset_path = File.join(directory, asset_path) if directory != '.'
+          asset_path = File.join(directory, asset_path) if directory != "."
 
           asset_path == path
         end&.last
@@ -231,11 +231,11 @@ class RailsPdfRenderer
     # will prepend a http or default_protocol to a protocol relative URL
     # or when no protcol is set.
     def prepend_protocol(source)
-      protocol = RailsPdfRenderer.configuration.default_protocol || 'http'
-      if source[0, 2] == '//'
-        source = [protocol, ':', source].join
-      elsif source[0] != '/' && !source[0, 8].include?('://')
-        source = [protocol, '://', source].join
+      protocol = RailsPdfRenderer.configuration.default_protocol || "http"
+      if source[0, 2] == "//"
+        source = [protocol, ":", source].join
+      elsif source[0] != "/" && !source[0, 8].include?("://")
+        source = [protocol, "://", source].join
       end
       source
     end
@@ -243,13 +243,13 @@ class RailsPdfRenderer
     def precompiled_or_absolute_asset?(source)
       !Rails.configuration.respond_to?(:assets) ||
         Rails.configuration.assets.compile == false ||
-        source.to_s[0] == '/' ||
-        source.to_s.match(/\Ahttps?\:\/\//)
+        source.to_s[0] == "/" ||
+        source.to_s.match(/\Ahttps?:\/\//)
     end
 
     def read_asset(source)
       asset = find_asset(source)
-      return asset.to_s.force_encoding('UTF-8') if asset
+      return asset.to_s.force_encoding("UTF-8") if asset
 
       unless precompiled_or_absolute_asset?(source)
         raise MissingLocalAsset, source if RailsPdfRenderer.configuration.raise_on_missing_assets
@@ -258,7 +258,7 @@ class RailsPdfRenderer
       end
 
       pathname = asset_pathname(source)
-      if pathname =~ URI_REGEXP
+      if URI_REGEXP.match?(pathname)
         read_from_uri(pathname)
       elsif File.file?(pathname)
         IO.read(pathname)
@@ -277,7 +277,7 @@ class RailsPdfRenderer
       end
 
       asset = response.body
-      asset.force_encoding('UTF-8') if asset
+      asset&.force_encoding("UTF-8")
       asset = gzip(asset) if RailsPdfRenderer.configuration.expect_gzipped_remote_assets
       asset
     end
@@ -294,9 +294,9 @@ class RailsPdfRenderer
       return unless webpacker_version
 
       # In Webpacker 3.2.0 asset_pack_url is introduced
-      if webpacker_version >= '3.2.0'
+      if webpacker_version >= "3.2.0"
         if (host = Rails.application.config.asset_host)
-          asset_pack_path(source, :host => host)
+          asset_pack_path(source, host: host)
         else
           asset_pack_url(source)
         end
@@ -320,10 +320,10 @@ class RailsPdfRenderer
 
     def webpacker_version
       if defined?(Shakapacker)
-        require 'shakapacker/version'
+        require "shakapacker/version"
         Shakapacker::VERSION
       elsif defined?(Webpacker)
-        require 'webpacker/version'
+        require "webpacker/version"
         Webpacker::VERSION
       end
     end
