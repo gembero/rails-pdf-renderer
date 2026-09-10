@@ -1,11 +1,5 @@
 class RailsPdfRenderer
   module ActionControllerHelper
-    def self.prepended(base)
-      # Protect from trying to augment modules that appear
-      # as the result of adding other gems.
-      nil if base != ActionController::Base
-    end
-
     def render(*args)
       options = args.first
       if options.is_a?(Hash) && options.key?(:pdf)
