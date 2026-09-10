@@ -1,5 +1,14 @@
 # RailsPdfRenderer
 
+## Ruby support
+
+This gem only supports Ruby versions that are still supported by the Ruby core
+team. When a Ruby version reaches end-of-life it is dropped from the CI matrix
+and `required_ruby_version` is raised in the next release, which may happen in a
+minor version bump.
+
+The currently supported versions are Ruby 3.3, 3.4 and 4.0.
+
 ## Installation
 
 Install the gem and add to the application's Gemfile by executing:
